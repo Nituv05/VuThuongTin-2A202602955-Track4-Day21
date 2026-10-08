@@ -14,38 +14,28 @@
 
 ## 2. Evidence
 
-**Thiết kế:** mỗi frame chạy 9 mức yaw `0, ±0.5, ±1, ±2, ±3°`, 7 mức dịch ngang `0, ±2, ±5, ±10 cm` và 4 mức yaw nhỏ `±0.1, ±0.25°`: tổng **2.000 cấu hình**, **26.160 dòng object**. Chỉ thay một yếu tố mỗi lần; không thay point cloud, label hay frame; seed 42 được ghi lại, không có lấy mẫu ngẫu nhiên. Yaw quay quanh z-up; dịch ngang theo y-left KITTI và x-right nuScenes, nên dấu dịch ngang khác hướng trái/phải giữa hai dataset. Giữ bù ego motion của nuScenes.
+Chạy **2.000 cấu hình trên 100 frame**, gồm yaw `0, ±0.5, ±1, ±2, ±3°`, dịch ngang `0, ±2, ±5, ±10 cm` và yaw nhỏ `±0.1, ±0.25°`; mỗi lần chỉ thay một yếu tố. Giữ nguyên frame, label, tập điểm baseline và bù ego motion nuScenes; không lấy mẫu ngẫu nhiên, seed ghi nhận là 42.
 
-**Metric:** chọn điểm nằm trong box 3D GT và trong FOV của calibration baseline, cố định ID điểm và box 2D tương ứng. `score = 100 × số điểm chiếu vào đúng box 2D / số điểm baseline`; điểm mất FOV sau perturb vẫn nằm trong mẫu số và tính là mismatch. Score frame/dataset gộp theo số cặp điểm–object, không phải trung bình đều các object; box chồng lấn có thể đếm một điểm ở nhiều object. `drop_pp = score_baseline − score_perturb`; cảnh báo **từng frame** khi `drop_pp ≥ 10`. Object không có điểm được ghi NaN, không coi là pass. Tỷ lệ FOV chia số điểm XYZ hữu hạn; độ dịch pixel dùng cùng ID điểm còn trong FOV ở cả hai cấu hình, số điểm mất FOV được ghi riêng.
+**Score** là tỷ lệ điểm thuộc box 3D và FOV baseline còn chiếu vào box 2D tương ứng; mẫu số cố định, điểm mất FOV tính là mismatch. Cảnh báo từng frame khi score giảm **≥10 pp**. Ngưỡng được chọn trước sweep để minh họa: với mẫu số 100 cặp điểm–object, giảm 10 cặp đúng box tương ứng giảm 10 pp; chưa tối ưu hoặc xác nhận trên log sạch độc lập.
 
-| Dataset | Perturb | Điểm trong FOV (%) | Score đúng box (%) | Giảm (pp) | Dịch pixel* | Frame cảnh báo (%) |
-|---|---|---:|---:|---:|---:|---:|
-| KITTI | yaw 0° | 15,740 | 99,565 | 0,000 | 0,00 | 0 |
-| KITTI | yaw +0,5° | 15,747 | 97,196 | 2,369 | 7,30 | 30 |
-| KITTI | yaw +1° | 15,750 | 92,839 | 6,725 | 14,58 | 55 |
-| KITTI | yaw +2° | 15,751 | 83,909 | 15,655 | 29,07 | 80 |
-| KITTI | yaw +3° | 15,760 | 75,905 | 23,660 | 43,50 | 100 |
-| nuScenes | yaw 0° | 8,727 | 99,937 | 0,000 | 0,00 | 0 |
-| nuScenes | yaw +0,5° | 8,723 | 97,527 | 2,410 | 12,61 | 6,25 |
-| nuScenes | yaw +1° | 8,723 | 92,161 | 7,776 | 25,18 | 43,75 |
-| nuScenes | yaw +2° | 8,718 | 80,412 | 19,525 | 50,25 | 95 |
-| nuScenes | yaw +3° | 8,712 | 69,586 | 30,351 | 75,24 | 100 |
-| KITTI | dịch ngang +10 cm | 15,746 | 97,992 | 1,572 | 5,82 | 5 |
-| nuScenes | dịch ngang +10 cm | 8,724 | 98,834 | 1,103 | 9,84 | 0 |
+| Dataset | Yaw | Score đúng box (%) | Giảm (pp) | Dịch pixel* | Frame cảnh báo (%) |
+|---|---|---:|---:|---:|---:|
+| KITTI | 0° | 99,565 | 0,000 | 0,00 | 0 |
+| KITTI | +1° | 92,839 | 6,725 | 14,58 | 55 |
+| KITTI | +3° | 75,905 | 23,660 | 43,50 | 100 |
+| nuScenes | 0° | 99,937 | 0,000 | 0,00 | 0 |
+| nuScenes | +1° | 92,161 | 7,776 | 25,18 | 43,75 |
+| nuScenes | +3° | 69,586 | 30,351 | 75,24 | 100 |
 
-*Dịch pixel là trung vị của p50 từng frame, **không phải** p50 gộp toàn bộ điểm và **không phải latency**. Bảng đầy đủ cả perturb âm, p95 và mức nhỏ: [calibration_summary.csv](../results/calibration_summary.csv); chi tiết: [calibration_frames.csv](../results/calibration_frames.csv), [calibration_objects.csv](../results/calibration_objects.csv).
+*Dịch pixel là trung vị của p50 từng frame trên các điểm còn trong cả hai FOV. Score gộp theo số cặp điểm–object, còn tỷ lệ cảnh báo đếm frame. Kết quả đầy đủ: [calibration_summary.csv](../results/calibration_summary.csv); phương pháp và các bảng chi tiết: [APPENDIX.md](APPENDIX.md).
 
-![Benchmark yaw và dịch ngang](../results/figures/calibration_sweep.png)
+![Độ nhạy score và độ dịch pixel theo calibration drift](../results/figures/calibration_sweep.png)
 
-Ở +3°, score nhóm xa >30 m giảm **74,28 pp KITTI / 63,78 pp nuScenes**, so với nhóm gần <10 m giảm **13,90 / 19,63 pp**: box nhỏ ở xa dễ mất điểm khi lệch góc. Khoảng cách là norm của bottom center trong camera frame; nhóm giữa 10–30 m gồm hai đầu mút. Xem [range_summary.csv](../results/range_summary.csv).
+![Tỷ lệ frame cảnh báo và score bỏ sót yaw nhỏ](../results/figures/drift_detection.png)
 
-![Demo gần: KITTI 000019, Truck 6,56 m](../results/figures/demo_near_lt10m.png)
-![Demo trung bình: KITTI 000016, Truck 28,14 m](../results/figures/demo_mid_10to30m.png)
-![Demo xa: KITTI 000049, Van 35,62 m](../results/figures/demo_far_gt30m.png)
+Ở yaw +3°, nhóm xa >30 m giảm score 74,28 pp KITTI / 63,78 pp nuScenes, lớn hơn nhóm gần <10 m (13,90 / 19,63 pp). Với +0,25° nuScenes, độ dịch tổng hợp 6,31 px nhưng không frame nào cảnh báo. Ba ảnh demo gần/trung bình/xa và ảnh hưởng dịch ngang nằm trong phụ lục.
 
-**So sánh sensor và giới hạn:** trung bình KITTI có 119.318,45 điểm/frame, nuScenes 34.718,80; ảnh KITTI khoảng 1242×375, nuScenes 1600×900 và tiêu cự theo pixel lớn hơn, nên cùng yaw drift tạo độ dịch pixel khác nhau. nuScenes camera sớm hơn LiDAR 34,232–39,535 ms; starter đã bù ego motion, chưa loại hết sai lệch vật thể chuyển động. Với +3°, score scene ban ngày giảm 32,04 pp, scene đêm giảm 28,91 pp; bố cục và traffic khác nhau nên không kết luận ánh sáng là nguyên nhân. Xem [scene_summary.csv](../results/scene_summary.csv).
-
-**Quan trọng với nuScenes:** starter suy ra box 2D từ box 3D bằng calibration baseline và xấp xỉ box bằng yaw-only; box 2D này không phải annotation camera độc lập. Baseline score gần 100% có tính phụ thuộc hình học; thí nghiệm đo độ nhạy với drift giả lập, không chứng minh calibration gốc chính xác tuyệt đối. KITTI cũng có occlusion/truncation và không kiểm tra che khuất bằng z-buffer. Hai lần chạy cho **6 CSV benchmark và experiment_config.json giống từng byte**; số liệu trong bảng được làm tròn từ CSV. Nguồn ảnh: **KITTI Vision Benchmark Suite** và **nuScenes (Motional)**, dữ liệu do đề bài cung cấp.
+nuScenes có ít điểm hơn (trung bình 34.718,80 so với 119.318,45 KITTI), ảnh/tiêu cự theo pixel khác và timestamp lệch; không quy toàn bộ khác biệt cho số beam hay ngày/đêm. **Box 2D nuScenes do starter suy ra từ box 3D bằng calibration baseline**, nên score gần 100% không phải kiểm chứng calibration độc lập. Hai lần chạy cho 6 CSV benchmark và config giống từng byte. Nguồn ảnh: KITTI Vision Benchmark Suite và nuScenes (Motional).
 
 ## 3. Failure case
 
@@ -89,8 +79,8 @@ CLI tùy chọn: `python -m src.projection_qa --help`; chạy một dataset/fram
 
 ## 6. Khai báo sử dụng AI
 
-| Công cụ | Dùng cho việc gì | Kiểm chứng đã thực hiện |
+| Công cụ | Dùng cho việc gì | Kiểm chứng do agent thực hiện |
 |---|---|---|
 | OpenAI Codex | Đọc yêu cầu, lập kế hoạch, cài đặt projection và CLI benchmark, kiểm thử, phân tích failure, soạn báo cáo và hướng dẫn trình bày | Chạy 9 kiểm thử hình học/metric; điểm synthetic `(10,0,0)` cho z≈9,73 m, pixel≈(614,175); xem ảnh baseline/failure; chạy hai lần so CSV/config giống từng byte; kiểm tra checksum dữ liệu và submission checker |
 
-Các bước kiểm chứng trên do agent chạy trong workspace, **không phải xác nhận học viên đã tự kiểm chứng hoặc hiểu toàn bộ code**. Học viên cần đọc code, tự chạy lại và giải thích được cách chọn điểm, mẫu số, threshold và giới hạn nuScenes trước khi nộp/vấn đáp. Không dùng AI để tạo ảnh minh chứng hoặc bịa số liệu; mọi ảnh trong results là projection/plot từ code và dữ liệu thật của đề bài.
+**Kiểm chứng cá nhân của học viên: chưa được xác nhận trong phiên làm việc.** Các bước và kết quả cần tự đối chiếu nằm trong [APPENDIX.md](APPENDIX.md). Sau khi thực hiện, bổ sung kết quả thực tế vào mục này. Mọi ảnh minh chứng là projection/plot từ code và dữ liệu đề bài; không dùng ảnh AI tạo sinh hoặc số liệu bịa.

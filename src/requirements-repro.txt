@@ -1,0 +1,5 @@
+# Tested with Python 3.12.9 on macOS arm64; pin direct dependencies for replay.
+numpy==2.5.3
+opencv-python==4.13.0.92
+matplotlib==3.10.7
+pandas==2.3.3

@@ -1,14 +1,14 @@
-# Báo cáo Day 6: [ĐIỀN tên đề tài ngắn]
+# Báo cáo Day 6: Độ nhạy projection LiDAR–camera với calibration drift
 
 > Thay **mọi** ô có chữ ĐIỀN nằm trong ngoặc vuông bằng nội dung của bạn, xoá luôn cả dấu ngoặc vuông. Lệnh `python tools/check_submission.py` sẽ báo FAIL nếu còn sót bất kỳ chỗ nào.
 
-- **Họ tên:** [ĐIỀN]
-- **MSSV:** [ĐIỀN] (phải trùng với MSSV trong tên repo `<HoVaTen>-<MSSV>-Track4-Day21`)
-- **Lớp:** [ĐIỀN]
-- **Link repo:** [ĐIỀN]
-- **Topic:** [ĐIỀN một chữ cái A/B/C/D/E/F] — [ĐIỀN tên topic]
-- **Dataset:** [ĐIỀN một hoặc nhiều trong: data/synthetic, data/kitti_mini, data/nuscenes_mini_subset, log riêng]
-- **Các frame đã dùng:** [ĐIỀN danh sách frame id, ví dụ 000011, 000049 hoặc scene-0103_010]
+- **Họ tên:** Vũ Thường Tín
+- **MSSV:** 2A202602955
+- **Lớp:** K4 Track 4
+- **Link repo:** https://github.com/Nituv05/K4-Track4-Day06-VuThuongTin-2A202602955-3D-From-Point-Clouds
+- **Topic:** A — LiDAR-camera projection QA (Advanced)
+- **Dataset:** data/synthetic (kiểm thử), data/kitti_mini, data/nuscenes_mini_subset (benchmark)
+- **Các frame đã dùng:** Toàn bộ 20 frame KITTI và 80 frame nuScenes; danh sách chi tiết sẽ xuất trong results/frames.csv.
 
 > Hãy viết ngắn: mỗi mục từ 3 đến 8 dòng, ưu tiên số liệu và hình ảnh.
 
@@ -16,7 +16,7 @@
 
 Một câu khẳng định kỹ thuật có thể kiểm chứng. Ví dụ: *"Lệch yaw 1° làm 12% điểm LiDAR rơi ra khỏi vật thể ở 30 m, phát hiện được bằng edge-alignment score với ngưỡng X."*
 
-[ĐIỀN]
+Giả thuyết CP1: yaw drift 0.5–3° làm tăng độ dịch pixel và giảm tỷ lệ điểm của vật thể chiếu vào đúng box 2D; ngưỡng giảm 10 điểm phần trăm có thể cảnh báo drift nhưng có thể bỏ sót drift nhỏ. Claim cuối cùng sẽ dựa trên số liệu chạy thật.
 
 ## 2. Evidence
 

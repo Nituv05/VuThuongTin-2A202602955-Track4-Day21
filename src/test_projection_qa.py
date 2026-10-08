@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from starter.kitti_io import KittiCalib, load_calib
+from starter.kitti_io import KittiCalib, KittiObject, load_calib
 from starter.projection import cam_to_image, velo_to_cam
 
 
@@ -46,6 +46,44 @@ class ProjectionTests(unittest.TestCase):
         uv, depth, _ = cam_to_image(np.array([[1., 2., 3.]]), p2, (20, 20))
         np.testing.assert_allclose(uv, [[3., 6.]])
         np.testing.assert_allclose(depth, [3.])
+
+
+class MetricTests(unittest.TestCase):
+    def test_rotated_box_bottom_center(self):
+        from src.projection_qa import points_in_box
+        obj = KittiObject("Car", 0., 0, 0., np.array([0., 0., 10., 10.]),
+                          np.array([2., 2., 4.]), np.array([10., 5., 20.]), np.pi / 2)
+        p = np.array([[10., 4., 21.9], [10., 4., 22.1], [10.9, 3., 20.],
+                      [11.1, 4., 20.], [10., 5.1, 20.], [10., 2.9, 20.],
+                      [np.nan, 4., 20.]])
+        np.testing.assert_array_equal(points_in_box(p, obj), [True, False, True, False, False, False, False])
+
+    def test_fixed_denominator_and_undefined(self):
+        from src.projection_qa import alignment_metrics
+        self.assertEqual(alignment_metrics(10, 9, 7), (90., 70., 20., True))
+        # Losing projected points does not reduce the baseline denominator.
+        self.assertEqual(alignment_metrics(10, 9, 0), (90., 0., 90., True))
+        self.assertEqual(alignment_metrics(10, 9, 8), (90., 80., 10., True))
+        self.assertTrue(all(np.isnan(v) for v in alignment_metrics(0, 0, 0)))
+
+    def test_lateral_axes_and_zero_drift(self):
+        from src.projection_qa import drift_calib
+        c = KittiCalib(np.eye(3, 4), np.eye(3), np.eye(3, 4))
+        np.testing.assert_allclose(drift_calib(c, "translation", 5., "kitti").Tr_velo_to_cam[:, 3], [0., .05, 0.])
+        np.testing.assert_allclose(drift_calib(c, "translation", 5., "nuscenes").Tr_velo_to_cam[:, 3], [.05, 0., 0.])
+        np.testing.assert_allclose(drift_calib(c, "yaw", 0., "kitti").T_cam_velo, c.T_cam_velo)
+        np.testing.assert_allclose(c.Tr_velo_to_cam, np.eye(3, 4))
+
+    def test_range_boundaries_and_fixed_pixel_indices(self):
+        from src.projection_qa import expanded_projection, range_bucket
+        self.assertEqual([range_bucket(v) for v in (9.9, 10., 30., 30.1)],
+                         ["near_lt10m", "mid_10to30m", "mid_10to30m", "far_gt30m"])
+        c = KittiCalib(np.eye(3, 4), np.eye(3), np.eye(3, 4))
+        uv, depth, mask = expanded_projection(np.array([[1., 2., 1.], [-1., 0., 1.], [3., 4., 1.]]), c, (10, 10))
+        np.testing.assert_array_equal(mask, [True, False, True])
+        np.testing.assert_allclose(uv[[0, 2]], [[1., 2.], [3., 4.]])
+        self.assertTrue(np.isnan(uv[1]).all())
+        self.assertTrue(np.isnan(depth[1]))
 
 
 if __name__ == "__main__":

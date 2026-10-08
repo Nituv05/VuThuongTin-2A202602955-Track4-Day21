@@ -1,0 +1,6 @@
+type,dataset,frame_id,object_index,class,distance_m,figure,kind,value,drop_pp,pixel_shift_p50
+demo,kitti_mini,000019,0,Truck,6.556935259707846,demo_near_lt10m.png,yaw,0.0,0.0,0.0
+demo,kitti_mini,000016,1,Truck,28.1368957065274,demo_mid_10to30m.png,yaw,0.0,0.0,0.0
+demo,kitti_mini,000049,16,Van,35.61556120574264,demo_far_gt30m.png,yaw,0.0,0.0,0.0
+geometry_failure,kitti_mini,000061,1,Car,14.805975145190539,fail_01_geometry_yaw.png,yaw,-3.0,100.0,62.09951356644352
+metric_failure,nuscenes_mini_subset,scene-1094_008,0,Car,20.501190405655773,fail_02_metric_missed_drift.png,yaw,-2.0,0.0,60.618078317421606

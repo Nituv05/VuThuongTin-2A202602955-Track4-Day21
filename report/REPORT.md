@@ -32,9 +32,13 @@ Bảng hoặc plot số liệu, kèm ảnh/video demo. Ghi rõ đường dẫn f
 
 Nêu khi nào hệ thống hoặc phương pháp fail, vì sao fail, và liên hệ tới lớp nào trong 6 lớp debug: I/O, Geometry, Time, Preprocess, Model, Metric.
 
-![failure](../results/figures/fail_[ĐIỀN].png)
+![Lỗi hình học do yaw drift](../results/figures/fail_01_geometry_yaw.png)
 
-[ĐIỀN]
+**Geometry:** KITTI frame `000061`, Car #1 ở 14,81 m, yaw −3°: 108/108 điểm ban đầu trong box 2D, sau drift còn 0/108; p50 dịch 62,10 px. Calibration thay đổi làm điểm chiếu lệch khỏi xe; ảnh này có truncation 0,79 nên không suy rộng sang mọi vật thể.
+
+![Score bỏ sót drift](../results/figures/fail_02_metric_missed_drift.png)
+
+**Metric:** nuScenes `scene-1094_008`, Car #0 ở 20,50 m, yaw −2°: 31/31 điểm vẫn ở trong box nhưng dịch p50 60,62 px. Score của object không giảm; score frame giảm 6,63 điểm phần trăm, dưới ngưỡng 10 nên không cảnh báo. Box rộng và phép gộp theo số điểm che giấu lệch. Cần thêm alignment với cạnh ảnh và kiểm tra theo từng object, không dùng tỷ lệ trong box làm chứng nhận calibration đúng.
 
 ## 4. Khuyến nghị nếu triển khai thật
 
